@@ -16,6 +16,7 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
+ENV POSTGRES_PRISMA_URL: "postgresql://prisma:prisma@localhost:5432/prisma" # This is a mockup
 
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
