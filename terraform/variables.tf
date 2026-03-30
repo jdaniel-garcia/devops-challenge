@@ -1,6 +1,6 @@
 variable "google_project_id" {
   type = string
-  default = "moonpay-terraform-challenge"
+  default = "challenge-moonpay"
 }
 
 variable "google_region" {

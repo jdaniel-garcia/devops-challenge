@@ -1,0 +1,78 @@
+name: CI/CD GitOps Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch: 
+
+env:
+  PROJECT_ID: "challenge-moonpay"
+  REGION: "europe-southwest1"
+  GAR_REPO: "challenge-moonpay"
+  IMAGE_NAME: "devops-challenge-app"
+  WIF_PROVIDER: "projects/834624369784/locations/global/workloadIdentityPools/github-pool/providers/github-provider"
+
+jobs:
+  build-and-promote:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  
+      packages: write  
+      id-token: write  
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      
+      - name: Install pnpm
+        run: npm install -g pnpm@latest
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Application
+        run: pnpm build 
+
+      - name: Code Linting
+        run: pnpm lint
+
+      - name: Type Checking
+        run: pnpm tsc --noEmit
+
+      - name: Unit Tests
+        run: pnpm test --if-present
+
+      - name: Google Cloud Auth
+        id: auth
+        uses: 'google-github-actions/auth@v3'
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: '${{ env.WIF_PROVIDER }}'
+
+      - name: Docker Auth
+        uses: 'docker/login-action@v3'
+        with:
+          registry: '${{ env.REGION }}-docker.pkg.dev'
+          username: 'oauth2accesstoken'
+          password: '${{ steps.auth.outputs.auth_token }}'
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_REPO }}/${{ env.IMAGE_NAME }}
+          tags: type=sha,format=short
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}

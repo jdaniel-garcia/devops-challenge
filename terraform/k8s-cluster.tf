@@ -16,9 +16,11 @@ module "gke" {
 
   deletion_protection = false
 
+  remove_default_node_pool = true
+
   node_pools = [
     {
-      name               = "default-pool"
+      name               = "default"
       machine_type       = "e2-standard-2"
       min_count          = 1
       max_count          = 1
@@ -31,6 +33,4 @@ module "gke" {
       initial_node_count = 1
     }
   ]
-
-  depends_on = [google_compute_subnetwork.subnet]
 }
