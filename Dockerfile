@@ -1,5 +1,7 @@
 FROM node:22-alpine AS builder
 WORKDIR /app
+ENV POSTGRES_PRISMA_URL: "postgresql://prisma:prisma@localhost:5432/prisma" # This is a mockup
+
 RUN apk add --no-cache libc6-compat && corepack enable pnpm
 
 COPY package.json pnpm-lock.yaml* ./
