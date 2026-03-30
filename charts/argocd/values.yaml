@@ -1,0 +1,51 @@
+argo-cd:
+  configs:
+    params:
+      server.insecure: true
+
+  server:
+    service:
+      type: LoadBalancer
+
+# values.yaml
+argocd-apps:
+  applications:
+    devops-challenge-dev:
+      namespace: argocd
+      project: default
+      source:
+        repoURL: "https://github.com/jdaniel-garcia/devops-challenge.git"
+        path: charts/moonpay-app
+        targetRevision: main
+        helm:
+          valueFiles:
+            - values/dev.yaml
+      destination:
+        server: "https://kubernetes.default.svc"
+        namespace: dev
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+
+    devops-challenge-prod:
+      namespace: argocd
+      project: default
+      source:
+        repoURL: "https://github.com/jdaniel-garcia/devops-challenge.git"
+        path: charts/moonpay-app
+        targetRevision: main
+        helm:
+          valueFiles:
+            - values/prod.yaml
+      destination:
+        server: "https://kubernetes.default.svc"
+        namespace: prod
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true

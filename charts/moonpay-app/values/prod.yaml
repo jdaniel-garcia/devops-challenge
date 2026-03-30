@@ -1,0 +1,11 @@
+image:
+  repository: europe-southwest1-docker.pkg.dev/challenge-moonpay/challenge-moonpay/devops-challenge-app
+  tag: "v1.0.0"
+
+replicaCount: 3
+
+service:
+  type: LoadBalancer
+  port: 80
+env:
+  NODE_ENV: "production"

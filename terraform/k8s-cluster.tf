@@ -14,6 +14,8 @@ module "gke" {
   ip_range_pods     = "pods-range"
   ip_range_services = "services-range"
 
+  grant_registry_access = true
+
   deletion_protection = false
 
   remove_default_node_pool = true
