@@ -15,7 +15,7 @@ env:
   ARGO_APP_PROD: "moonpay-app-prod"
   ARGO_SERVER: "34.175.184.159:80"
   DEV_URL: "http://34.175.26.110"
-  PROD_URL: "http://moonpay.internal"
+  PROD_URL: "http://34.175.216.100"
 
 jobs:
   build-and-promote:
