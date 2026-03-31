@@ -7,10 +7,10 @@ postgresql:
       size: 8Gi
 
   passwordUpdateJob:
-    enabled: true
+    enabled: false
   auth:
     username: moonpay
     database: moonpay
-    existingSecret: db-credentials      # Tell Bitnami to read from our secret
+    existingSecret: db-credentials
     secretKeys:
       userPasswordKey: password
