@@ -2,10 +2,22 @@ image:
   repository: europe-southwest1-docker.pkg.dev/challenge-moonpay/challenge-moonpay/devops-challenge-app
   tag: "sha-ae9f17c"
 
-replicaCount: 3
+replicaCount: 2
 
 service:
   type: LoadBalancer
   port: 80
+  targetPort: 3000
+
 env:
   NODE_ENV: "production"
+
+postgresql:
+  enabled: true
+  auth:
+    username: postgres
+    password: postgrespassword # Change this in a real setup
+    database: currencies
+  persistence:
+    enabled: true
+    size: 20Gi

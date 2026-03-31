@@ -1,0 +1,11 @@
+postgresql:
+  architecture: standalone
+
+  auth:
+    database: "moonpay_db"
+    username: "moonpay_user"
+
+  primary:
+    persistence:
+      enabled: true
+      size: 8Gi
