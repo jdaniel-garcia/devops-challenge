@@ -110,18 +110,23 @@ jobs:
             https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
           chmod +x /usr/local/bin/argocd
 
-      - name: ArgoCD login
+      - name: Wait for dev to be healthy
+        env:
+          ARGO_TOKEN: ${{ secrets.ARGOCD_AUTH_TOKEN }}
         run: |
-          argocd login "${{ env.ARGO_SERVER }}" \
-            --auth-token "${{ secrets.ARGOCD_AUTH_TOKEN }}" \
-            --plaintext 
+          echo "Waiting for ${{ env.ARGO_APP_DEV }} to sync..."
+          for i in $(seq 1 30); do
+            RESPONSE=$(curl -sf \
+              "http://${{ env.ARGO_SERVER }}/api/v1/applications/${{ env.ARGO_APP_DEV }}" \
+              -H "Authorization: Bearer ${ARGO_TOKEN}")
+            HEALTH=$(echo "$RESPONSE" | jq -r '.status.health.status')
+            SYNC=$(echo "$RESPONSE"   | jq -r '.status.sync.status')
+            echo "  [${i}/30] health=${HEALTH} sync=${SYNC}"
+            [ "$HEALTH" = "Healthy" ] && [ "$SYNC" = "Synced" ] && break
+            [ "$i" = "30" ] && { echo "::error::Timed out"; exit 1; }
+            sleep 10
+          done
 
-      - name: Wait for ArgoCD dev sync
-        run: |
-          argocd app wait "${{ env.ARGO_APP_DEV }}" \
-            --sync \
-            --health \
-            --timeout 300   # 5 min — adjust to your rollout time
 
       - name: Smoke test dev
         run: |
