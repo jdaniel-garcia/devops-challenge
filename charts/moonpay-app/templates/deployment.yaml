@@ -16,7 +16,7 @@ spec:
       initContainers:
         - name: run-migrations
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-          command: ["prisma", "generate"]
+          command: ["npx", "prisma", "migrate", "deploy"]
           env:
             - name: DATABASE_URL
               value: "postgresql://{{ .Values.db.user }}:$(DB_PASSWORD)@{{ .Values.db.host }}:5432/{{ .Values.db.name }}"
