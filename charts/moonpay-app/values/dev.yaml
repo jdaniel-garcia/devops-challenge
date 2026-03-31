@@ -1,6 +1,6 @@
 image:
   repository: europe-southwest1-docker.pkg.dev/challenge-moonpay/challenge-moonpay/devops-challenge-app
-  tag: "sha-7ca5166"
+  tag: "sha-5b0a536"
 
 replicaCount: 1
 
