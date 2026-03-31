@@ -100,7 +100,7 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add values/dev.yaml
+          git add charts/moonpay-app/values/dev.yaml
           git commit -m "chore(dev): update image tag to ${{ steps.tag.outputs.value }} [skip ci]"
           git push
 
@@ -141,7 +141,7 @@ jobs:
 
       - name: Commit and push values/prod.yaml
         run: |
-          git add values/prod.yaml
+          git add charts/moonpay-app/values/prod.yaml
           git commit -m "chore(prod): promote image tag ${{ steps.tag.outputs.value }} [skip ci]"
           git push
 
