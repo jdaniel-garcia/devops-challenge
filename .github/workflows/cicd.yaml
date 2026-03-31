@@ -130,14 +130,10 @@ jobs:
 
       - name: Smoke test dev
         run: |
-          STATUS=$(curl --silent --output /dev/null --write-out "%{http_code}" \
-            --max-time 10 --retry 5 --retry-delay 5 --retry-connrefused \
-            "${{ env.DEV_URL }}/api/health")   # ← adjust path to your health endpoint
-          echo "HTTP status: ${STATUS}"
-          if [ "${STATUS}" != "200" ]; then
-            echo "::error::Dev smoke test failed with HTTP ${STATUS}"
-            exit 1
-          fi
+          STATUS=$(curl -sf -o /dev/null -w "%{http_code}" \
+            --retry 5 --retry-delay 5 --retry-connrefused \
+            "${{ env.DEV_URL }}")
+          [ "$STATUS" = "200" ] || { echo "::error::HTTP ${STATUS}"; exit 1; }
 
       - name: Update image tag in values/prod.yaml
         run: |
@@ -149,20 +145,25 @@ jobs:
           git commit -m "chore(prod): promote image tag ${{ steps.tag.outputs.value }} [skip ci]"
           git push
 
-      - name: Wait for ArgoCD prod sync
+      - name: Wait for prod to be healthy
+        env:
+          ARGO_TOKEN: ${{ secrets.ARGOCD_AUTH_TOKEN }}
         run: |
-          argocd app wait "${{ env.ARGO_APP_PROD }}" \
-            --sync \
-            --health \
-            --timeout 600   # 10 min for prod — adjust as needed
+          for i in $(seq 1 60); do
+            RESPONSE=$(curl -sf \
+              "http://${{ env.ARGO_SERVER }}/api/v1/applications/${{ env.ARGO_APP_PROD }}" \
+              -H "Authorization: Bearer ${ARGO_TOKEN}")
+            HEALTH=$(echo "$RESPONSE" | jq -r '.status.health.status')
+            SYNC=$(echo "$RESPONSE"   | jq -r '.status.sync.status')
+            echo "  [${i}/60] health=${HEALTH} sync=${SYNC}"
+            [ "$HEALTH" = "Healthy" ] && [ "$SYNC" = "Synced" ] && break
+            [ "$i" = "60" ] && { echo "::error::Timed out"; exit 1; }
+            sleep 10
+          done
 
       - name: Smoke test prod
         run: |
-          STATUS=$(curl --silent --output /dev/null --write-out "%{http_code}" \
-            --max-time 10 --retry 5 --retry-delay 5 --retry-connrefused \
-            "${{ env.PROD_URL }}/api/health")
-          echo "HTTP status: ${STATUS}"
-          if [ "${STATUS}" != "200" ]; then
-            echo "::error::Prod smoke test failed with HTTP ${STATUS}"
-            exit 1
-          fi
+          STATUS=$(curl -sf -o /dev/null -w "%{http_code}" \
+            --retry 5 --retry-delay 5 --retry-connrefused \
+            "${{ env.PROD_URL }}")
+          [ "$STATUS" = "200" ] || { echo "::error::HTTP ${STATUS}"; exit 1; }
