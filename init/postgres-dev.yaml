@@ -5,5 +5,4 @@ metadata:
   namespace: dev
 type: Opaque
 stringData:
-  postgres-password: "1234Moonpay"
-  password: "1234Moonpay"
+  password: "<PASSWORD>"

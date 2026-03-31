@@ -1,0 +1,164 @@
+name: CI/CD GitOps Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch: 
+
+env:
+  PROJECT_ID: "challenge-moonpay"
+  REGION: "europe-southwest1"
+  GAR_REPO: "challenge-moonpay"
+  IMAGE_NAME: "devops-challenge-app"
+  WIF_PROVIDER: "projects/834624369784/locations/global/workloadIdentityPools/github-pool/providers/github-provider"
+  ARGO_APP_DEV: "moonpay-app-dev"
+  ARGO_APP_PROD: "moonpay-app-prod"
+  ARGO_SERVER: "http://34.175.184.159"
+  DEV_URL: "http://34.175.26.110"
+  PROD_URL: "http://moonpay.internal"
+
+jobs:
+  build-and-promote:
+    runs-on: ubuntu-latest
+    env:
+      POSTGRES_PRISMA_URL: "postgres://postgres:postgres@127.0.0.1/currencies?schema=public"
+    permissions:
+      contents: write  
+      packages: write  
+      id-token: write  
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      
+      - name: Install pnpm
+        run: npm install -g pnpm@latest
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Application
+        run: pnpm build 
+
+      - name: Code Linting
+        run: pnpm eslint .
+        continue-on-error: true
+
+      - name: Type Checking
+        run: pnpm tsc --noEmit
+
+      - name: Unit Tests
+        run: pnpm test --if-present
+
+      - name: Google Cloud Auth
+        id: auth
+        uses: 'google-github-actions/auth@v3'
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: '${{ env.WIF_PROVIDER }}'
+
+      - name: Docker Auth
+        uses: 'docker/login-action@v3'
+        with:
+          registry: '${{ env.REGION }}-docker.pkg.dev'
+          username: 'oauth2accesstoken'
+          password: '${{ steps.auth.outputs.auth_token }}'
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_REPO }}/${{ env.IMAGE_NAME }}
+          tags: type=sha,format=short
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+
+      - name: Parse image tag
+        id: tag
+        run: |
+          FULL_TAG="${{ steps.meta.outputs.tags }}"
+          IMAGE_TAG="${FULL_TAG##*:}"   # strip everything up to the last ":"
+          echo "value=${IMAGE_TAG}" >> "$GITHUB_OUTPUT"
+
+      - name: Update image tag in values/dev.yaml
+        run: |
+          sed -i "s|^\(\s*tag:\s*\).*|\1\"${{ steps.tag.outputs.value }}\"|" values/dev.yaml
+
+      - name: Commit and push values/dev.yaml
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add values/dev.yaml
+          git commit -m "chore(dev): update image tag to ${{ steps.tag.outputs.value }} [skip ci]"
+          git push
+
+      - name: Install ArgoCD CLI
+        run: |
+          curl -sSL -o /usr/local/bin/argocd \
+            https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+          chmod +x /usr/local/bin/argocd
+
+      - name: ArgoCD login
+        run: |
+          argocd login "${{ env.ARGO_SERVER }}" \
+            --auth-token "${{ secrets.ARGOCD_AUTH_TOKEN }}" \
+            --grpc-web \
+            --insecure   # remove if you have a valid cert
+
+      - name: Wait for ArgoCD dev sync
+        run: |
+          argocd app wait "${{ env.ARGO_APP_DEV }}" \
+            --sync \
+            --health \
+            --timeout 300   # 5 min — adjust to your rollout time
+
+      - name: Smoke test dev
+        run: |
+          STATUS=$(curl --silent --output /dev/null --write-out "%{http_code}" \
+            --max-time 10 --retry 5 --retry-delay 5 --retry-connrefused \
+            "${{ env.DEV_URL }}/api/health")   # ← adjust path to your health endpoint
+          echo "HTTP status: ${STATUS}"
+          if [ "${STATUS}" != "200" ]; then
+            echo "::error::Dev smoke test failed with HTTP ${STATUS}"
+            exit 1
+          fi
+
+      - name: Update image tag in values/prod.yaml
+        run: |
+          sed -i "s|^\(\s*tag:\s*\).*|\1\"${{ steps.tag.outputs.value }}\"|" values/prod.yaml
+
+      - name: Commit and push values/prod.yaml
+        run: |
+          git add values/prod.yaml
+          git commit -m "chore(prod): promote image tag ${{ steps.tag.outputs.value }} [skip ci]"
+          git push
+
+      - name: Wait for ArgoCD prod sync
+        run: |
+          argocd app wait "${{ env.ARGO_APP_PROD }}" \
+            --sync \
+            --health \
+            --timeout 600   # 10 min for prod — adjust as needed
+
+      - name: Smoke test prod
+        run: |
+          STATUS=$(curl --silent --output /dev/null --write-out "%{http_code}" \
+            --max-time 10 --retry 5 --retry-delay 5 --retry-connrefused \
+            "${{ env.PROD_URL }}/api/health")
+          echo "HTTP status: ${STATUS}"
+          if [ "${STATUS}" != "200" ]; then
+            echo "::error::Prod smoke test failed with HTTP ${STATUS}"
+            exit 1
+          fi

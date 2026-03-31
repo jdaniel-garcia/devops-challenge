@@ -12,12 +12,7 @@ service:
 env:
   NODE_ENV: "production"
 
-postgresql:
-  enabled: true
-  auth:
-    username: postgres
-    password: postgrespassword # Change this in a real setup
-    database: currencies
-  persistence:
-    enabled: true
-    size: 20Gi
+db:
+  host: "postgresql-prod.prod.svc.cluster.local"
+  name: "moonpay"
+  user: "moonpay"

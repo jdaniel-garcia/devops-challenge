@@ -1,12 +1,16 @@
 postgresql:
   architecture: standalone
 
-  auth:
-    database: "moonpay"
-    username: "moonpay"
-    password: "1234Moonpay"
-
   primary:
     persistence:
       enabled: true
       size: 8Gi
+
+  passwordUpdateJob:
+    enabled: true
+  auth:
+    username: moonpay
+    database: moonpay
+    existingSecret: db-credentials      # Tell Bitnami to read from our secret
+    secretKeys:
+      userPasswordKey: password

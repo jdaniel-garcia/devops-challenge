@@ -2,12 +2,21 @@ argo-cd:
   configs:
     params:
       server.insecure: true
+    cm:
+      accounts.ci-bot: apiKey
+
+    rbac:
+      policy.csv: |
+        p, role:ci-bot, applications, get,    */*, allow
+        p, role:ci-bot, applications, sync,   */*, allow
+        p, role:ci-bot, applications, update, */*, allow
+        g, ci-bot, role:ci-bot
+      policy.default: role:readonly
 
   server:
     service:
       type: LoadBalancer
 
-# values.yaml
 argocd-apps:
   applicationsets:
     cluster-apps-dev:
@@ -18,8 +27,7 @@ argocd-apps:
             revision: main
             directories:
               - path: charts/*
-              - path: charts/argocd
-                exclude: true
+
       template:
         metadata:
           name: '{{path.basename}}-dev'
