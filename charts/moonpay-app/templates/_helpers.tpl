@@ -49,7 +49,3 @@ app.kubernetes.io/name: {{ include "moonpay-app.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
-{{- define "moonpay-app.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "moonpay-app.name" . }}
-app.kubernetes.io/instance: {{ .Release.Name }}
-{{- end }}
