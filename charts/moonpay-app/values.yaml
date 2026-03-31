@@ -1,4 +1,11 @@
+# Default values for moonpay-app.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
 replicaCount: 1
+
+migrations:
+  enabled: true
 
 image:
   repository: europe-southwest1-docker.pkg.dev/challenge-moonpay/challenge-moonpay/devops-challenge-app
@@ -15,20 +22,3 @@ service:
 
 env:
   NODE_ENV: "production"
-
-# PostgreSQL Configuration
-postgresql:
-  enabled: true
-  image:
-    repository: postgres
-    tag: "17-alpine"
-    pullPolicy: IfNotPresent
-  auth:
-    username: postgres
-    password: postgrespassword
-    database: currencies
-  service:
-    port: 5432
-  persistence:
-    enabled: true
-    size: 8Gi

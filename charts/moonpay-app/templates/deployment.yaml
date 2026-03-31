@@ -1,39 +1,45 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "moonpay-app.fullname" . }}
-  labels:
-    {{- include "moonpay-app.labels" . | nindent 4 }}
+  name: {{ .Release.Name }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      {{- include "moonpay-app.selectorLabels" . | nindent 6 }}
+      app: {{ .Release.Name }}
   template:
     metadata:
       labels:
-        {{- include "moonpay-app.selectorLabels" . | nindent 8 }}
+        app: {{ .Release.Name }}
     spec:
-      containers:
-        - name: {{ .Chart.Name }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
-          ports:
-            - name: http
-              containerPort: {{ .Values.service.port }}
-              protocol: TCP
+      {{- if .Values.migrations.enabled }}
+      initContainers:
+        - name: run-migrations
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          command: ["prisma", "generate"]
           env:
+            - name: DATABASE_URL
+              value: "postgresql://{{ .Values.db.user }}:$(DB_PASSWORD)@{{ .Values.db.host }}:5432/{{ .Values.db.name }}"
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-credentials
+                  key: password
             - name: NODE_ENV
               value: {{ .Values.env.NODE_ENV | quote }}
-            {{- if .Values.postgresql.enabled }}
-            - name: POSTGRES_PRISMA_URL
-              value: "postgres://{{ .Values.postgresql.auth.username }}:{{ .Values.postgresql.auth.password }}@{{ include "moonpay-app.fullname" . }}-postgresql:{{ .Values.postgresql.service.port }}/{{ .Values.postgresql.auth.database }}?schema=public"
-            {{- end }}
-          livenessProbe:
-            httpGet:
-              path: /
-              port: http
-          readinessProbe:
-            httpGet:
-              path: /
-              port: http
+      {{- end }}
+      containers:
+        - name: nextjs
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          ports:
+            - containerPort: 3000
+          env:
+            - name: DATABASE_URL
+              value: "postgresql://{{ .Values.db.user }}:$(DB_PASSWORD)@{{ .Values.db.host }}:5432/{{ .Values.db.name }}"
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-credentials
+                  key: password
+            - name: NODE_ENV
+              value: {{ .Values.env.NODE_ENV | quote }}

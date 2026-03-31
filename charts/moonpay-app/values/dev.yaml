@@ -12,12 +12,7 @@ service:
 env:
   NODE_ENV: "development"
 
-postgresql:
-  enabled: true
-  auth:
-    username: postgres
-    password: postgrespassword # Change this in a real setup
-    database: currencies
-  persistence:
-    enabled: true
-    size: 8Gi
+db:
+  host: "postgresql-dev.dev.svc.cluster.local"
+  name: "currencies"
+  user: "postgres"
