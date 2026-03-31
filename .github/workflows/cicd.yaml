@@ -114,8 +114,7 @@ jobs:
         run: |
           argocd login "${{ env.ARGO_SERVER }}" \
             --auth-token "${{ secrets.ARGOCD_AUTH_TOKEN }}" \
-            --grpc-web \
-            --insecure   # remove if you have a valid cert
+            --insecure
 
       - name: Wait for ArgoCD dev sync
         run: |
