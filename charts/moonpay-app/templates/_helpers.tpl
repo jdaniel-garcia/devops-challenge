@@ -49,3 +49,14 @@ app.kubernetes.io/name: {{ include "moonpay-app.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
+{{- define "moonpay-app.dbEnv" -}}
+- name: DB_PASSWORD
+  valueFrom:
+    secretKeyRef:
+      name: db-credentials
+      key: password
+- name: POSTGRES_PRISMA_URL
+  value: "postgresql://{{ .Values.db.user }}:$(DB_PASSWORD)@{{ .Values.db.host }}:5432/{{ .Values.db.name }}"
+- name: NODE_ENV
+  value: {{ .Values.env.NODE_ENV | quote }}
+{{- end }}
