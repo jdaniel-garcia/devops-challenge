@@ -13,7 +13,7 @@ env:
   WIF_PROVIDER: "projects/834624369784/locations/global/workloadIdentityPools/github-pool/providers/github-provider"
   ARGO_APP_DEV: "moonpay-app-dev"
   ARGO_APP_PROD: "moonpay-app-prod"
-  ARGO_SERVER: "34.175.184.159"
+  ARGO_SERVER: "34.175.184.159:80"
   DEV_URL: "http://34.175.26.110"
   PROD_URL: "http://moonpay.internal"
 
@@ -114,8 +114,7 @@ jobs:
         run: |
           argocd login "${{ env.ARGO_SERVER }}" \
             --auth-token "${{ secrets.ARGOCD_AUTH_TOKEN }}" \
-            --grpc-web \
-            --insecure
+            --plaintext 
 
       - name: Wait for ArgoCD dev sync
         run: |
