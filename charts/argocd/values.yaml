@@ -10,38 +10,64 @@ argo-cd:
 # values.yaml
 argocd-apps:
   applicationsets:
-    cluster-apps:
-          namespace: argocd
-          generators:
-            - matrix:
-                generators:
-                  - git:
-                      repoURL: "https://github.com/jdaniel-garcia/devops-challenge.git"
-                      revision: main
-                      directories:
-                        - path: charts/*
-                  - list:
-                      elements:
-                        - env: dev
-                        - env: prod
-          template:
-            metadata:
-              name: '{{path.basename}}-{{env}}'
-            spec:
-              project: default
-              source:
-                repoURL: "https://github.com/jdaniel-garcia/devops-challenge.git"
-                targetRevision: main
-                path: '{{path}}'
-                helm:
-                  valueFiles:
-                    - 'values-{{env}}.yaml'
-              destination:
-                server: "https://kubernetes.default.svc"
-                namespace: '{{env}}'
-              syncPolicy:
-                automated:
-                  prune: true
-                  selfHeal: true
-                syncOptions:
-                  - CreateNamespace=true
+    cluster-apps-dev:
+      namespace: argocd
+      generators:
+        - git:
+            repoURL: "https://github.com/jdaniel-garcia/devops-challenge.git"
+            revision: main
+            directories:
+              - path: charts/*
+              - path: charts/argocd
+                exclude: true
+      template:
+        metadata:
+          name: '{{path.basename}}-dev'
+        spec:
+          project: default
+          source:
+            repoURL: "https://github.com/jdaniel-garcia/devops-challenge.git"
+            targetRevision: main
+            path: '{{path}}'
+            helm:
+              valueFiles:
+                - 'values/dev.yaml'
+          destination:
+            server: "https://kubernetes.default.svc"
+            namespace: dev
+          syncPolicy:
+            automated:
+              prune: true
+              selfHeal: true
+            syncOptions:
+              - CreateNamespace=true
+
+    cluster-apps-prod:
+      namespace: argocd
+      generators:
+        - git:
+            repoURL: "https://github.com/jdaniel-garcia/devops-challenge.git"
+            revision: main
+            directories:
+              - path: charts/*
+      template:
+        metadata:
+          name: '{{path.basename}}-prod'
+        spec:
+          project: default
+          source:
+            repoURL: "https://github.com/jdaniel-garcia/devops-challenge.git"
+            targetRevision: main
+            path: '{{path}}'
+            helm:
+              valueFiles:
+                - 'values/prod.yaml'
+          destination:
+            server: "https://kubernetes.default.svc"
+            namespace: prod
+          syncPolicy:
+            automated:
+              prune: true
+              selfHeal: true
+            syncOptions:
+              - CreateNamespace=true
