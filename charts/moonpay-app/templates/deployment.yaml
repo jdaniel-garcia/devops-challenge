@@ -6,11 +6,11 @@ spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app: {{ .Release.Name }}
+      {{- include "moonpay-app.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        app: {{ .Release.Name }}
+        {{- include "moonpay-app.selectorLabels" . | nindent 6 }}
     spec:
       {{- if .Values.migrations.enabled }}
       initContainers:
