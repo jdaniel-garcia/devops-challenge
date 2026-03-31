@@ -14,5 +14,5 @@ env:
 
 db:
   host: "postgresql-dev.dev.svc.cluster.local"
-  name: "currencies"
-  user: "postgres"
+  name: "moonpay"
+  user: "moonpay"

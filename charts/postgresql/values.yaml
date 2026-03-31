@@ -2,8 +2,8 @@ postgresql:
   architecture: standalone
 
   auth:
-    database: "currencies"
-    username: "postgres"
+    database: "moonpay"
+    username: "moonpay"
     password: "1234Moonpay"
 
   primary:
