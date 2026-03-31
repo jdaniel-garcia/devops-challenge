@@ -58,7 +58,7 @@ export default async function Home() {
           />
         </Link>
         <Link
-          href="https://github.com/moonpay/devops-challenge"
+          href="https://github.com/jdaniel-garcia/devops-challenge"
           className="flex shrink-0 justify-center items-center space-x-2"
         >
           <Image
