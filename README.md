@@ -1,3 +1,13 @@
+# Quick installation
+The repository provide a Makefile that will deploy the whole stack in a single command, including application and infrastructure deployment.
+The makefile require:
+- Terraform 1.0.0 or greater
+- Helm 3
+- Kubectl
+
+It also require to fill the credentials contained inside the init folder. This is needed to workaround the problem of not having any kind of vault or secret manager deployed in the cluster.
+> **Note:** Due the lack of domain, smoke test contained in the pipeline use a hardcoded IP. This shouldn't happen in a real wold scenario, where you can use a domain name
+
 # :rocket: DevOps Challenge
 
 :wave: Hello and welcome to the DevOps Challenge! https://github.com/moonpay/devops-challenge
