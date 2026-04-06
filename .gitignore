@@ -55,3 +55,7 @@ override.tf.json
 *_override.tf.json
 .terraformrc
 terraform.rc
+
+init/argocd-secret.yaml
+init/postgres-dev.yaml
+init/postgres-prod.yaml
