@@ -49,7 +49,6 @@ export default async function Home() {
         <Link href="https://moonpay.com" className="shrink-0">
           <Image
             src="/moonpay-logo.svg"
-            alt="MoonPay Logo"
             width={0}
             height={0}
             sizes="100vw"
